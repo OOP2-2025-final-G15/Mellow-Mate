@@ -1,7 +1,15 @@
-<body>
-    <h1>はじめまして</h1>
-    <p>ユーザー登録を始めましょう</p>
+{% extends "layout.html" %}
 
-    <a href="register.html">開始</a>
-    <a href="login.html">ログイン</a>
-</body>
+{% block title %}トップページ - Mellow Mate{% endblock %}
+
+{% block content %}
+    <div class="welcome-container">
+        <h1>はじめまして</h1>
+        <p>ユーザー登録を始めましょう</p>
+
+        <div class="actions">
+            <a href="register.html" class="btn">開始</a>
+            <a href="login.html" class="btn">ログイン</a>
+        </div>
+    </div>
+{% endblock %}
