@@ -6,7 +6,7 @@
 </head>
 <body>
     <h1>ユーザー情報入力</h1>
-    <form action="{{ url_for('profile_setup') }}" method="post">
+    <form action="{{ url_for('register') }}" method="post">
         <label for="userName">ユーザー名:</label>
         <input type="text" id="userName" name="userName" required><br><br>
 
@@ -20,7 +20,7 @@
         <input type="number" id="weight" name="weight" required><br><br>
 
         <label>性別:</label><br>
-        <input type="radio" id="male" name="gender" value="male" required>
+        <input type="radio" id="male" name="gender" value="female" required>
         <label for="male">男性</label><br>
         <input type="radio" id="female" name="gender" value="female">
         <label for="female">女性</label><br><br>
