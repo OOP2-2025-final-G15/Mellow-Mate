@@ -238,6 +238,34 @@ def weight():
     today = datetime.date.today()
     return render_template("tracking/weight.html", today=today)
 
+@app.route("/tracking/waterIntake", methods=["GET", "POST"])
+@login_required
+def waterIntake():
+    if request.method == "POST":
+        record_date = request.form.get("record_date")
+        amount = float(request.form.get("amount"))
+        record, created = DailyRecord.get_or_create(user=current_user, date=record_date)
+        record.water_intake = amount
+        record.save()
+        return redirect(url_for("dashboard"))
+
+    today = datetime.date.today()
+    return render_template("tracking/waterIntake.html", today=today)
+
+@app.route("/tracking/stepCount", methods=["GET", "POST"])
+@login_required
+def stepCount():
+    if request.method == "POST":
+        record_date = request.form.get("record_date")
+        steps = int(request.form.get("steps"))
+        record, created = DailyRecord.get_or_create(user=current_user, date=record_date)
+        record.step_count = steps
+        record.save()
+        return redirect(url_for("dashboard"))
+
+    today = datetime.date.today()
+    return render_template("tracking/stepCount.html", today=today)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
