@@ -62,3 +62,27 @@ def initialize_database():
     db.connect()
     db.create_tables([User, DailyRecord], safe=True)
     db.close()
+        # --- 追加モデルの定義 ---
+
+# 食べ物マスター（名前とカロリーの辞書のようなもの）
+class Food(BaseModel):
+    name = CharField()
+    calories = IntegerField()
+
+# ユーザーごとの食事記録（いつ、誰が、何を、どの時間帯に食べたか）
+class FoodLog(BaseModel):
+    user = ForeignKeyField(User, backref='food_logs')
+    food = ForeignKeyField(Food, backref='logs')
+    meal_time = CharField()  # 朝・昼・夜
+    record_date = DateField()
+
+# --- 初期化関数のアップデート ---
+# 既存の initialize_database を呼び出した後に、新しいテーブルも作るように定義
+def initialize_extended_database():
+    # 既存のテーブル作成
+    initialize_database()
+    
+    # 新しいテーブルの作成
+    db.connect(reuse_if_open=True)
+    db.create_tables([Food, FoodLog], safe=True)
+    db.close()
