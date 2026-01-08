@@ -1,0 +1,120 @@
+/* --- 認証・登録画面用デザイン (auth.css) --- */
+
+/* 1. コンテナ：画面中央に白いカードとして表示 */
+.login-container,
+.welcome-container,
+.auth-container {
+    max-width: 480px;       /* 横幅を広げすぎない */
+    margin: 60px auto;      /* 上下の余白と中央寄せ */
+    padding: 40px;          /* 内側の余白 */
+    background-color: #ffffff;
+    border-radius: 12px;    /* 角を丸く */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* ふんわりした影 */
+    text-align: center;     /* タイトルなどを中央揃え */
+}
+
+/* 2. タイトル */
+h1, h2 {
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+/* 3. フォームのレイアウト */
+.form-group {
+    margin-bottom: 20px;    /* 入力欄ごとの間隔 */
+    text-align: left;       /* ラベルと入力欄は左揃え */
+}
+
+/* 4. ラベル */
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+/* 5. 入力フィールド (テキスト・数値・パスワード・プルダウン) */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select,
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease;
+    box-sizing: border-box; /* パディングを含めた幅計算 */
+}
+
+/* 入力中のフォーカスデザイン */
+input:focus,
+select:focus {
+    border-color: #20c997; /* テーマカラー */
+    background-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.15); /* 緑色の光 */
+}
+
+/* 6. ボタンデザイン */
+button[type="submit"],
+.btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #20c997;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+    display: inline-block;
+    text-decoration: none;
+}
+
+button[type="submit"]:hover,
+.btn:hover {
+    background-color: #17a078; /* ホバー時は少し濃く */
+}
+
+/* 7. トップページ(register.html)用のボタングループ */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* ボタン同士の間隔 */
+    margin-top: 30px;
+}
+
+.actions a {
+    text-align: center;
+    background-color: #20c997;
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+/* 「ログイン」ボタンだけ色を変えたい場合（サブボタン） */
+.actions a.btn-secondary {
+    background-color: #6c757d;
+}
+
+/* 8. 戻るリンクなど */
+a {
+    color: #20c997;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 20px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
