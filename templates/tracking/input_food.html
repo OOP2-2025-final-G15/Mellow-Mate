@@ -1,3 +1,8 @@
+{% extends "layout.html" %}
+
+{% block title %}トップページ - Mellow Mate{% endblock %}
+
+{% block content %}
 <h1>食べ物の追加</h1>
 
 <form method="POST">
@@ -20,3 +25,4 @@
 <a href="{{ url_for('calories') }}">
     <button type="button">キャンセルして戻る</button>
 </a>
+{% endblock %}
