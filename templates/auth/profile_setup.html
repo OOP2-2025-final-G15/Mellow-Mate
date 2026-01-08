@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <title>ユーザー登録</title>
-</head>
+{% extends "layout.html" %}
+
+{% block title %}ユーザー登録 - Mellow Mate{% endblock %}
+
+{% block content %}
 <body>
     <h1>ユーザー情報入力</h1>
-    <form action="{{ url_for('profile_setup') }}" method="post">
+    <form action="{{ url_for('register') }}" method="post">
         <label for="userName">ユーザー名:</label>
         <input type="text" id="userName" name="userName" required><br><br>
 
@@ -32,4 +30,4 @@
         <button type="submit">次へ</button>
     </form>
 </body>
-</html>
+{% endblock %}

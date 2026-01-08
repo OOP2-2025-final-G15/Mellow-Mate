@@ -158,7 +158,7 @@ def register():
         flash('登録完了！ログインしてください。')
         return redirect(url_for('login'))
 
-    return render_template('auth/register.html')
+    return render_template('auth/profile_setup.html')
 
 # ④ ログイン
 @app.route('/login', methods=['GET', 'POST'])
