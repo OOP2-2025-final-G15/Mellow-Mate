@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>カロリー管理</title>
+</head>
+
+<body>
+
+    <h1>カロリー管理</h1>
+
+    <form method="POST">
+        <!-- 日付選択 -->
+        <div>
+            <label>日付</label><br>
+            <input type="date" name="record_date" value="{{ today }}">
+        </div>
+
+        <!-- 朝・昼・夜 -->
+        <div>
+            <label>食事の時間</label><br>
+            <select name="meal_time">
+                <option value="朝">朝</option>
+                <option value="昼">昼</option>
+                <option value="夜">夜</option>
+            </select>
+        </div>
+
+        <!-- 食べ物選択 -->
+        <div>
+            <label>食べ物</label><br>
+            <select name="food_id">
+                {% for food in foods %}
+                <option value="{{ food.id }}">
+                    {{ food.name }}（{{ food.calories }} kcal）
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit">登録</button>
+    </form>
+
+    <br>
+
+    <!-- 食べ物追加ページへ -->
+    <a href="{{ url_for('input_food') }}">＋ 食べ物を追加</a>
+
+    <h2>今日の食事記録</h2>
+    {% if logs %}
+    <ul>
+        {% for log in logs %}
+        <li>{{ log.meal_time }}：{{ log.food.name }}（{{ log.food.calories }} kcal）</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>まだ食事が登録されていません。</p>
+    {% endif %}
+
+    <br><br>
+    <a href="{{ url_for('dashboard') }}">← ダッシュボードに戻る</a>
+
+</body>
+
+</html>

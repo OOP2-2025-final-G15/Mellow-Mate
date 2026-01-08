@@ -104,10 +104,23 @@ class DailyRecord(BaseModel):
     waterIntake = FloatField(default=0.0) # 水分量
     stepCount = IntegerField(default=0) # 歩数
 
+# 3. 食べ物
+class Food(BaseModel):
+    name = CharField()
+    calories = IntegerField()
+
+# 4. 食事ログ（いつ・何を・どの食事）
+class FoodLog(BaseModel):
+    user = ForeignKeyField(User, backref='food_logs')
+    record_date = DateField(default=datetime.date.today)
+    meal_time = CharField()  # "朝", "昼", "夜"
+    food = ForeignKeyField(Food)
+
 # --- DB初期化 ---
 # テーブルがなければ作成する
 with db:
-    db.create_tables([User, DailyRecord])
+    db.create_tables([User, DailyRecord, Food, FoodLog])
+
 
 # --- ルーティング ---
 
@@ -204,6 +217,89 @@ def update_settings():
         return redirect(url_for('update_settings'))
 
     return render_template('user/settings.html', current_user=current_user)
+
+# 食事とカロリー登録
+@app.route("/tracking/food", methods=["GET", "POST"])
+@login_required
+def input_food():
+    if request.method == "POST":
+        food_name = request.form.get("food_name")
+        calories = int(request.form.get("calories"))
+
+        # Foodテーブルに登録
+        Food.create(
+            name=food_name,
+            calories=calories
+        )
+
+        return redirect(url_for("calories"))
+
+    return render_template("tracking/input_food.html")
+
+# 食事記録
+@app.route("/tracking/calories", methods=["GET", "POST"])
+@login_required
+def calories():
+    if request.method == "POST":
+        food_id = int(request.form.get("food_id"))
+        meal_time = request.form.get("meal_time")
+        record_date = request.form.get("record_date")
+        # 食事ログを保存
+        FoodLog.create(
+            user=current_user,
+            food=Food.get_by_id(food_id),
+            meal_time=meal_time,
+            record_date=record_date
+        )
+        # 登録後は同じページに戻る
+        return redirect(url_for("calories"))
+
+    foods = Food.select()
+    today = datetime.date.today()
+
+
+# ★ 仮表示用にその日の食事ログを取得
+    logs = (
+        FoodLog
+        .select(FoodLog, Food)
+        .join(Food)
+        .where(
+            (FoodLog.user == current_user) &
+            (FoodLog.record_date == today)
+        )
+    )
+
+    # ★ 合計カロリーを計算
+    total_calories = sum(log.food.calories for log in logs)
+    return render_template(
+        "tracking/calories.html",
+        foods=foods,
+        today=today,
+        logs=logs,
+        total_calories=total_calories
+    )
+    
+# 体重記録
+@app.route("/tracking/weight", methods=["GET", "POST"])
+@login_required
+def weight():
+    if request.method == "POST":
+        record_date = request.form.get("record_date")
+        weight_value = float(request.form.get("weight"))
+
+        record, created = DailyRecord.get_or_create(
+            user=current_user,
+            date=record_date
+        )
+
+        record.weight = weight_value
+        record.save()
+
+        return redirect(url_for("dashboard"))
+
+    today = datetime.date.today()
+    return render_template("tracking/weight.html", today=today)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)

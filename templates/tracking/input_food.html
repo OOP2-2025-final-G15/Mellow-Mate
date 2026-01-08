@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>食べ物の追加</title>
+</head>
+
+<body>
+
+    <h1>食べ物の追加</h1>
+
+    <form method="POST">
+        <div>
+            <label>食べ物の名前</label><br>
+            <input type="text" name="food_name" required>
+        </div>
+
+        <div>
+            <label>カロリー（kcal）</label><br>
+            <input type="number" name="calories" required>
+        </div>
+
+        <button type="submit">登録して戻る</button>
+    </form>
+
+    <br>
+
+    <!-- 登録せずに戻るためのボタン -->
+    <a href="{{ url_for('calories') }}">
+        <button type="button">キャンセルして戻る</button>
+    </a>
+
+</body>
+
+</html>
