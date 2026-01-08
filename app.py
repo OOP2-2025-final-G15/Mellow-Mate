@@ -184,5 +184,60 @@ def update_settings():
 
     return render_template('user/settings.html', current_user=current_user)
 
+# --- 追加：トラッキング機能のルート ---
+from db_manager import Food, FoodLog, initialize_extended_database
+
+# 起動時の初期化を新しい関数に差し替え
+initialize_extended_database()
+
+@app.route("/tracking/food", methods=["GET", "POST"])
+@login_required
+def input_food():
+    if request.method == "POST":
+        food_name = request.form.get("food_name")
+        calories = int(request.form.get("calories"))
+        Food.create(name=food_name, calories=calories)
+        return redirect(url_for("calories"))
+    return render_template("tracking/input_food.html")
+
+@app.route("/tracking/calories", methods=["GET", "POST"])
+@login_required
+def calories():
+    if request.method == "POST":
+        food_id = int(request.form.get("food_id"))
+        meal_time = request.form.get("meal_time")
+        record_date = request.form.get("record_date")
+        
+        FoodLog.create(
+            user=current_user,
+            food=Food.get_by_id(food_id),
+            meal_time=meal_time,
+            record_date=record_date
+        )
+        return redirect(url_for("calories"))
+
+    foods = Food.select()
+    today = datetime.date.today()
+    logs = (FoodLog.select(FoodLog, Food).join(Food)
+            .where((FoodLog.user == current_user) & (FoodLog.record_date == today)))
+    
+    total_calories = sum(log.food.calories for log in logs)
+    return render_template("tracking/calories.html", foods=foods, today=today, logs=logs, total_calories=total_calories)
+
+@app.route("/tracking/weight", methods=["GET", "POST"])
+@login_required
+def weight():
+    if request.method == "POST":
+        record_date = request.form.get("record_date")
+        weight_value = float(request.form.get("weight"))
+        record, created = DailyRecord.get_or_create(user=current_user, date=record_date)
+        record.weight = weight_value
+        record.save()
+        return redirect(url_for("dashboard"))
+
+    today = datetime.date.today()
+    return render_template("tracking/weight.html", today=today)
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
