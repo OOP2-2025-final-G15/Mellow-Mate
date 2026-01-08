@@ -187,6 +187,32 @@ def logout():
 def dashboard():
     return render_template('main/dashboard.html', user=current_user)
 
+# ③ 目標設定・確認画面
+@app.route('/goals', methods=['GET', 'POST'])
+@login_required
+def goals():
+    if request.method == 'POST':
+        # フォームから取得
+        targetWeight = request.form.get("targetWeight")
+        targetCalories = request.form.get("targetCalories")
+
+        # 型変換と保存
+        if targetWeight:
+            current_user.targetWeight = float(targetWeight)
+        if targetCalories:
+            current_user.targetCalories = int(targetCalories)
+
+        current_user.save()  # Peewee 保存
+
+        flash("目標を更新しました。")
+        return redirect(url_for("goals"))
+
+    # 表示するためにテンプレに渡す
+    return render_template(
+        "main/goals.html",
+        current_user=current_user
+    )
+
 # ユーザー設定
 @app.route('/user/settings', methods=['GET', 'POST'])
 @login_required

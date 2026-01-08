@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>ダッシュボード</h2>
+
+<h3>{{ user.userName }} さんの記録</h3>
+
+<div>
+  <p>身長：{{ user.height }} cm</p>
+  <p>現在の体重：{{ user.weight }} kg</p>
+</div>
+
+<hr>
+
+<div>
+  <p>目標体重：{{ user.targetWeight }} kg</p>
+  <p>目標摂取カロリー：{{ user.targetCalories }} kg</p>
+</div>
+
+<hr>
+
+<div>
+  <p>摂取カロリー：{{ user.intakeCalories }} kcal</p>
+  <p>消費カロリー：{{ user.burnedCalories }} kcal</p>
+  <p>歩数：{{ user.stepCount }} 歩</p>
+</div>
+
+<a href="{{ url_for('goals') }}">目標を変更する</a>
+
+{% endblock %}
