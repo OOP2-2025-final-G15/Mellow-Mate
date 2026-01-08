@@ -1,3 +1,9 @@
+{% extends "layout.html" %}
+
+{% block title %}ユーザー登録 - Mellow Mate{% endblock %}
+
+{% block content %}
+
 <h1>体重記録</h1>
 
 <form method="POST">
@@ -16,3 +22,5 @@
 
 <br>
 <a href="{{ url_for('dashboard') }}">← ダッシュボードに戻る</a>
+
+{% endblock %}
