@@ -273,7 +273,7 @@ def waterIntake():
         record_date = request.form.get("record_date")
         amount = float(request.form.get("amount"))
         record, created = DailyRecord.get_or_create(user=current_user, date=record_date)
-        record.water_intake = amount
+        record.waterIntake = amount
         record.save()
         return redirect(url_for("dashboard"))
 
@@ -287,7 +287,7 @@ def stepCount():
         record_date = request.form.get("record_date")
         steps = int(request.form.get("steps"))
         record, created = DailyRecord.get_or_create(user=current_user, date=record_date)
-        record.step_count = steps
+        record.stepCount = steps
         record.save()
         return redirect(url_for("dashboard"))
 
