@@ -18,19 +18,32 @@
 
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash
-from peewee import *
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import date
+from flask_login import LoginManager,login_user, login_required, logout_user, current_user
 import datetime
+
+# db_manager.py からクラスや変数を読み込み
+from db_manager import db, User, DailyRecord, initialize_database
 
 app = Flask(__name__)
 
-# --- 設定周り ---
+# 設定
 app.config['SECRET_KEY'] = 'your_secret_key'
 
-# データベースの設定 (Peewee)
-db = SqliteDatabase('health.db')
+# データベース接続ハンドラ
+# リクエストが来るたびにDBにつなぎ、終わったら切断する設定
+@app.before_request
+def before_request():
+    db.connect()
+
+@app.teardown_request
+def _db_close(exc):
+    if not db.is_closed():
+        db.close()
+
+# アプリ起動時の初期化
+# 最初に1回だけ実行してテーブルを作る
+initialize_database()
+
 
 # --- ログイン管理の設定 ---
 login_manager = LoginManager()
@@ -44,70 +57,10 @@ def load_user(user_id):
     except User.DoesNotExist:
         return None
 
-# --- データベース接続ハンドラ ---
-# リクエストが来るたびにDBにつなぎ、終わったら切断する設定
-@app.before_request
-def before_request():
-    db.connect()
-
-@app.teardown_request
-def _db_close(exc):
-    if not db.is_closed():
-        db.close()
-
-# --- モデル定義 (Peewee) ---
-
-# 基本モデル（DB設定を共通化するためのクラス）
-class BaseModel(Model):
-    class Meta:
-        database = db
-
-# 1. ユーザー情報
-class User(UserMixin, BaseModel):
-    userName = CharField(unique=True) # 文字列
-    password = CharField()
-    
-    # プロフィール
-    age = IntegerField()           # 整数
-    gender = IntegerField()        # 1:男性, 2:女性, 0:その他
-    height = FloatField()          # 小数
-    weight = FloatField()
-    
-    # 目標設定(任意)
-    targetWeight = FloatField(null=True)
-    targetCalories = IntegerField(null=True)
-
-    # パスワード関連メソッド
-    # 新規登録のとき使う
-    def set_password(self, password):
-        # passwordをハッシュ化して保存
-        # password:ユーザーが入力した生のパスワード
-        # 生成されたハッシュを self.password に保存
-        self.password = generate_password_hash(password)
-
-    # ログインする時に使う
-    def check_password(self, password):
-        # 入力されたパスワードが保存されているハッシュと一致するか確認
-        return check_password_hash(self.password, password)
-
-# 2. 日々の記録
-class DailyRecord(BaseModel):
-    # ForeignKeyField(外部キー)でUserと紐付け (backrefで user.daily_records とアクセス可能に)
-    user = ForeignKeyField(User, backref='daily_records')
-    # date = DateField(default=datetime.date.today)は日付を自動入力する
-    date = DateField(default=datetime.date.today)
-    
-    # 変動データ
-    weight = FloatField(null=True) # 体重
-    intakeCalories = IntegerField(default=0) # 摂取カロリー
-    burnedCalories = IntegerField(default=0) # 消費カロリー
-    waterIntake = FloatField(default=0.0) # 水分量
-    stepCount = IntegerField(default=0) # 歩数
-
 # --- DB初期化 ---
 # テーブルがなければ作成する
-with db:
-    db.create_tables([User, DailyRecord])
+# with db:
+#     db.create_tables([User, DailyRecord])
 
 # --- ルーティング ---
 
