@@ -1,0 +1,185 @@
+/* --- 1. 全体のリセットと基本設定 --- */
+* {
+    box-sizing: border-box; /* 枠線の太さをサイズに含める */
+}
+
+body {
+    font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    background-color: #f4f7f6; /* 薄いグレーの背景 */
+    color: #333;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* メインコンテンツの幅を制限して中央寄せ */
+main {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+a {
+    color: #20c997;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- 2. ヘッダー (ナビゲーション) --- */
+nav {
+    background-color: #fff;
+    padding: 15px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between; /* ロゴとメニューを左右に離す */
+    align-items: center;
+}
+
+nav .logo {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #20c997; /* テーマカラー */
+}
+
+nav a {
+    margin-left: 15px;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+nav a:hover {
+    color: #20c997;
+    text-decoration: none;
+}
+
+/* --- 3. フォーム周り (登録・ログイン・設定) --- */
+/* 入力フォームを囲む白い箱 */
+.auth-container, .settings-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    max-width: 500px;
+    margin: 0 auto; /* 中央寄せ */
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 15px;
+}
+
+/* 入力欄のデザイン */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    width: 100%;
+}
+
+input:focus, select:focus {
+    border-color: #20c997;
+    outline: none;
+}
+
+/* --- 4. ボタン --- */
+button, .btn {
+    background-color: #20c997; /* テーマカラー */
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 20px;
+    text-align: center;
+    display: inline-block;
+    transition: background-color 0.3s;
+}
+
+button:hover, .btn:hover {
+    background-color: #17a078; /* ホバー時は少し濃く */
+    text-decoration: none;
+}
+
+/* キャンセルボタンや削除ボタン用 */
+.btn-danger {
+    background-color: #e74c3c;
+}
+
+/* --- 5. ダッシュボードのテーブル --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    overflow: hidden; /* 角丸のため */
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #555;
+}
+
+/* --- 6. 通知メッセージ (Flash Message) --- */
+.flashes {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.flashes li {
+    background-color: #d4edda; /* 薄い緑 */
+    color: #155724; /* 濃い緑の文字 */
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    border: 1px solid #c3e6cb;
+}
+
+/* エラーのときは赤くしたい場合、HTML側でクラス分けが必要ですが、
+   一旦共通で緑にしておきます。後で調整可能です。 */
+
+/* --- 7. トップページ --- */
+.welcome-container {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.welcome-container h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.actions {
+    margin-top: 30px;
+}
+
+.actions .btn {
+    margin: 0 10px;
+    min-width: 150px;
+}

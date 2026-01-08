@@ -1,3 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}トップページ - Mellow Mate{% endblock %}
+
+{% block content %}
+    <div class="welcome-container">
+        <h1>はじめまして</h1>
+        <p>ユーザー登録を始めましょう</p>
+
+        <div class="actions">
+            <a href="{{ url_for('register') }}">新規登録</a>
+            <a href="{{ url_for('login') }}" class="btn">ログイン</a>
+        </div>
+    </div>
+{% endblock %}
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>ユーザー登録</title>
+</head>
 <body>
     <h1>はじめまして</h1>
     <p>ユーザー登録を始めましょう</p>
@@ -5,4 +23,4 @@
     <a href="{{ url_for('register') }}">開始</a>
     <a href="{{ url_for('login') }}">ログイン</a>
 </body>
-</html>
+</html> -->
