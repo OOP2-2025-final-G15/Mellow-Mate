@@ -138,7 +138,31 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('main/dashboard.html', user=current_user)
+    today = datetime.date.today()
+    logs = (FoodLog.select(FoodLog, Food)
+            .join(Food)
+            .where((FoodLog.user == current_user) & (FoodLog.record_date == today)))
+    
+    total_calories = sum(log.food.calories for log in logs)
+    
+    # 体重・歩数・水分の取得
+    # 今日のDailyRecordを取得
+    daily_record = DailyRecord.get_or_none(
+        (DailyRecord.user == current_user) & (DailyRecord.date == today)
+    )
+
+    # レコードがあればその値を、なければ0やユーザーのデフォルト値を使う
+    current_weight = daily_record.weight if daily_record and daily_record.weight else current_user.weight
+    stepCount = daily_record.stepCount if daily_record else 0
+    waterIntake = daily_record.waterIntake if daily_record else 0
+
+    return render_template('main/dashboard.html', 
+                           user=current_user,
+                           total_calories=total_calories, # 計算したカロリー
+                           current_weight=current_weight, # 今日の体重
+                           steps=stepCount,                   # 今日の歩数
+                           water=waterIntake)                   # 今日の水分
+
 
 # ③ 目標設定・確認画面
 @app.route('/goals', methods=['GET', 'POST'])
@@ -204,7 +228,11 @@ def input_food():
 @login_required
 def calories():
     if request.method == "POST":
-        food_id = int(request.form.get("food_id"))
+        food_id_val = request.form.get("food_id")
+        if not food_id_val:
+            flash("食べ物が選択されていません。まずは「＋食べ物を追加」から登録してください。")
+            return redirect(url_for("calories"))
+        food_id = int(food_id_val)
         meal_time = request.form.get("meal_time")
         record_date = request.form.get("record_date")
         
