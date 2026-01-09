@@ -20,6 +20,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager,login_user, login_required, logout_user, current_user
 import datetime
+from utils import calculate_burned_calories
 
 # db_manager.py からクラスや変数を読み込み
 from db_manager import db, User, DailyRecord, initialize_database
@@ -156,12 +157,16 @@ def dashboard():
     stepCount = daily_record.stepCount if daily_record else 0
     waterIntake = daily_record.waterIntake if daily_record else 0
 
+    # 消費カロリー計算
+    burned_calories = calculate_burned_calories(current_user, current_weight, stepCount)
+
     return render_template('main/dashboard.html', 
                            user=current_user,
                            total_calories=total_calories, # 計算したカロリー
                            current_weight=current_weight, # 今日の体重
                            steps=stepCount,                   # 今日の歩数
-                           water=waterIntake)                   # 今日の水分
+                           water=waterIntake,                  # 今日の水分摂取量   
+                           burned_calories=burned_calories)     # 今日の消費カロリー              
 
 
 # ③ 目標設定・確認画面
