@@ -20,6 +20,7 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager,login_user, login_required, logout_user, current_user
 import datetime
+from utils import calculate_burned_calories
 
 # db_manager.py からクラスや変数を読み込み
 from db_manager import db, User, DailyRecord, initialize_database
@@ -138,7 +139,35 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('main/dashboard.html', user=current_user)
+    today = datetime.date.today()
+    logs = (FoodLog.select(FoodLog, Food)
+            .join(Food)
+            .where((FoodLog.user == current_user) & (FoodLog.record_date == today)))
+    
+    total_calories = sum(log.food.calories for log in logs)
+    
+    # 体重・歩数・水分の取得
+    # 今日のDailyRecordを取得
+    daily_record = DailyRecord.get_or_none(
+        (DailyRecord.user == current_user) & (DailyRecord.date == today)
+    )
+
+    # レコードがあればその値を、なければ0やユーザーのデフォルト値を使う
+    current_weight = daily_record.weight if daily_record and daily_record.weight else current_user.weight
+    stepCount = daily_record.stepCount if daily_record else 0
+    waterIntake = daily_record.waterIntake if daily_record else 0
+
+    # 消費カロリー計算
+    burned_calories = calculate_burned_calories(current_user, current_weight, stepCount)
+
+    return render_template('main/dashboard.html', 
+                           user=current_user,
+                           total_calories=total_calories, # 計算したカロリー
+                           current_weight=current_weight, # 今日の体重
+                           steps=stepCount,                   # 今日の歩数
+                           water=waterIntake,                  # 今日の水分摂取量   
+                           burned_calories=burned_calories)     # 今日の消費カロリー              
+
 
 # ③ 目標設定・確認画面
 @app.route('/goals', methods=['GET', 'POST'])
@@ -204,7 +233,11 @@ def input_food():
 @login_required
 def calories():
     if request.method == "POST":
-        food_id = int(request.form.get("food_id"))
+        food_id_val = request.form.get("food_id")
+        if not food_id_val:
+            flash("食べ物が選択されていません。まずは「＋食べ物を追加」から登録してください。")
+            return redirect(url_for("calories"))
+        food_id = int(food_id_val)
         meal_time = request.form.get("meal_time")
         record_date = request.form.get("record_date")
         
@@ -237,6 +270,34 @@ def weight():
 
     today = datetime.date.today()
     return render_template("tracking/weight.html", today=today)
+
+@app.route("/tracking/waterIntake", methods=["GET", "POST"])
+@login_required
+def waterIntake():
+    if request.method == "POST":
+        record_date = request.form.get("record_date")
+        amount = float(request.form.get("amount"))
+        record, created = DailyRecord.get_or_create(user=current_user, date=record_date)
+        record.waterIntake = amount
+        record.save()
+        return redirect(url_for("dashboard"))
+
+    today = datetime.date.today()
+    return render_template("tracking/waterIntake.html", today=today)
+
+@app.route("/tracking/stepCount", methods=["GET", "POST"])
+@login_required
+def stepCount():
+    if request.method == "POST":
+        record_date = request.form.get("record_date")
+        steps = int(request.form.get("steps"))
+        record, created = DailyRecord.get_or_create(user=current_user, date=record_date)
+        record.stepCount = steps
+        record.save()
+        return redirect(url_for("dashboard"))
+
+    today = datetime.date.today()
+    return render_template("tracking/stepCount.html", today=today)
 
 
 if __name__ == '__main__':

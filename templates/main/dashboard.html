@@ -13,10 +13,10 @@
         <a href="{{ url_for('calories') }}" style="text-decoration: none; color: #333;">🍴 カロリー</a>
       </li>
       <li style="margin-bottom: 20px;">
-        <a href="#" style="text-decoration: none; color: #333;">👟 歩数</a>
+        <a href="{{ url_for('stepCount') }}" style="text-decoration: none; color: #333;">👟 歩数</a>
       </li>
       <li style="margin-bottom: 20px;">
-        <a href="#" style="text-decoration: none; color: #333;">💧 水分量</a>
+        <a href="{{ url_for('waterIntake') }}" style="text-decoration: none; color: #333;">💧 水分量</a>
       </li>
     </ul>
   </nav>
@@ -28,7 +28,7 @@
 
     <div>
       <p>身長：{{ user.height }} cm</p>
-      <p>現在の体重：{{ user.weight }} kg</p>
+      <p>現在の体重：{{ current_weight }} kg</p>
     </div>
 
     <hr>
@@ -41,10 +41,13 @@
     <hr>
 
     <div>
-      <p>摂取カロリー：{{ user.intakeCalories | default(0) }} kcal</p>
-      <p>消費カロリー：{{ user.burnedCalories | default(0) }} kcal</p>
-      <p>歩数：{{ user.stepCount | default(0) }} 歩</p>
-      <p>水分量：{{ user.waterIntake | default(0.0) }} L</p>
+      <p>摂取カロリー：{{ total_calories }} kcal</p>
+      
+      <p>消費カロリー：{{ burned_calories }} kcal</p> 
+      
+      <p>歩数：{{ steps|default(0) }} 歩</p>
+      
+      <p>水分量：{{ water|default(0) }} ml</p>
     </div>
 
     <a href="{{ url_for('goals') }}" style="color: #2ecc71; text-decoration: none;">目標を変更する</a>
