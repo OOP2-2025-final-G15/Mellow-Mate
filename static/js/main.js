@@ -1,20 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // --- 機能1：通知メッセージ（登録完了など）を自動で消す ---
-    const flashMessages = document.querySelectorAll('.flash, .alert');
-    
-    if (flashMessages.length > 0) {
-        // 3秒(3000ミリ秒)後にフワッと消える処理
-        setTimeout(function() {
-            flashMessages.forEach(function(msg) {
-                msg.style.transition = "opacity 0.5s ease";
-                msg.style.opacity = "0"; // 透明にする
-                
-                // 透明になった後に完全に削除する
-                setTimeout(() => msg.remove(), 500);
-            });
-        }, 3000);
-    }
 
     // --- 機能2：現在のページをメニューで強調表示する ---
     const currentUrl = window.location.href;
@@ -39,4 +23,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+});
+
+//ユーザー設定ページ(settings.html)の登録後3秒後に自動で閉じる
+document.addEventListener('DOMContentLoaded', function() {
+
+    const settingsForm = document.querySelector('.settings-container form');
+    
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', function() {
+            setTimeout(function() {
+            // 3秒後にダッシュボードへ移動する
+            window.location.href = "{{ url_for('dashboard') }}";
+        }, 3000);
+        });
+    }
 });
