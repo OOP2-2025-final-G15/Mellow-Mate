@@ -136,37 +136,37 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    today = datetime.date.today()
-    logs = (FoodLog.select(FoodLog, Food)
-            .join(Food)
-            .where((FoodLog.user == current_user) & (FoodLog.record_date == today)))
+# @app.route('/dashboard')
+# @login_required
+# def dashboard():
+#     today = datetime.date.today()
+#     logs = (FoodLog.select(FoodLog, Food)
+#             .join(Food)
+#             .where((FoodLog.user == current_user) & (FoodLog.record_date == today)))
     
-    total_calories = sum(log.food.calories for log in logs)
+#     total_calories = sum(log.food.calories for log in logs)
     
-    # 体重・歩数・水分の取得
-    # 今日のDailyRecordを取得
-    daily_record = DailyRecord.get_or_none(
-        (DailyRecord.user == current_user) & (DailyRecord.date == today)
-    )
+#     # 体重・歩数・水分の取得
+#     # 今日のDailyRecordを取得
+#     daily_record = DailyRecord.get_or_none(
+#         (DailyRecord.user == current_user) & (DailyRecord.date == today)
+#     )
 
-    # レコードがあればその値を、なければ0やユーザーのデフォルト値を使う
-    current_weight = daily_record.weight if daily_record and daily_record.weight else current_user.weight
-    stepCount = daily_record.stepCount if daily_record else 0
-    waterIntake = daily_record.waterIntake if daily_record else 0
+#     # レコードがあればその値を、なければ0やユーザーのデフォルト値を使う
+#     current_weight = daily_record.weight if daily_record and daily_record.weight else current_user.weight
+#     stepCount = daily_record.stepCount if daily_record else 0
+#     waterIntake = daily_record.waterIntake if daily_record else 0
 
-    # 消費カロリー計算
-    burned_calories = calculate_burned_calories(current_user, current_weight, stepCount)
+#     # 消費カロリー計算
+#     burned_calories = calculate_burned_calories(current_user, current_weight, stepCount)
 
-    return render_template('main/dashboard.html', 
-                           user=current_user,
-                           total_calories=total_calories, # 計算したカロリー
-                           current_weight=current_weight, # 今日の体重
-                           steps=stepCount,                   # 今日の歩数
-                           water=waterIntake,                  # 今日の水分摂取量   
-                           burned_calories=burned_calories)     # 今日の消費カロリー              
+#     return render_template('main/dashboard.html', 
+#                            user=current_user,
+#                            total_calories=total_calories, # 計算したカロリー
+#                            current_weight=current_weight, # 今日の体重
+#                            steps=stepCount,                   # 今日の歩数
+#                            water=waterIntake,                  # 今日の水分摂取量   
+#                            burned_calories=burned_calories)     # 今日の消費カロリー              
 
 
 # ③ 目標設定・確認画面
@@ -309,6 +309,58 @@ def stepCount():
     today = datetime.date.today()
     return render_template("tracking/stepCount.html", today=today)
 
+# --- グラフの1ヶ月表示対応のためのアップデート (既存のdashboardを上書き) ---
+import calendar
 
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    today = datetime.date.today()
+    year = int(request.args.get('year', today.year))
+    month = int(request.args.get('month', today.month))
+    _, last_day = calendar.monthrange(year, month)
+    
+    intake_list = [0] * last_day
+    burned_list = [0] * last_day
+    weight_list = [None] * last_day # 体重用リスト（データがない日はNone）
+
+    # 食事記録の取得
+    month_logs = (FoodLog.select(FoodLog, Food).join(Food)
+                 .where((FoodLog.user == current_user) & 
+                        (FoodLog.record_date >= datetime.date(year, month, 1)) &
+                        (FoodLog.record_date <= datetime.date(year, month, last_day))))
+    for log in month_logs:
+        intake_list[log.record_date.day - 1] += log.food.calories
+
+    # 活動・体重記録の取得
+    month_records = (DailyRecord.select()
+                    .where((DailyRecord.user == current_user) &
+                           (DailyRecord.date >= datetime.date(year, month, 1)) &
+                           (DailyRecord.date <= datetime.date(year, month, last_day))))
+    
+    for rec in month_records:
+        day_idx = rec.date.day - 1
+        # 消費カロリー計算
+        w = rec.weight if rec.weight else current_user.weight
+        s = rec.stepCount if rec.stepCount else 0
+        burned_list[day_idx] = calculate_burned_calories(current_user, w, s)
+        # 体重リストに保存
+        if rec.weight:
+            weight_list[day_idx] = rec.weight
+
+    # 今日の詳細表示用
+    daily_record = DailyRecord.get_or_none((DailyRecord.user == current_user) & (DailyRecord.date == today))
+    current_weight = daily_record.weight if daily_record and daily_record.weight else current_user.weight
+
+    return render_template('main/dashboard.html', 
+                           user=current_user,
+                           intake_list=intake_list,
+                           burned_list=burned_list,
+                           weight_list=weight_list, # ★追加
+                           total_calories=intake_list[today.day-1],
+                           current_weight=current_weight,
+                           steps=daily_record.stepCount if daily_record else 0,
+                           water=daily_record.waterIntake if daily_record else 0,
+                           burned_calories=burned_list[today.day-1])
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
