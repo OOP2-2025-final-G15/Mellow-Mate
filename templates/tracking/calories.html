@@ -43,7 +43,7 @@
 <!-- 食べ物追加ページへ -->
 <a href="{{ url_for('input_food') }}">＋ 食べ物を追加</a>
 
-<h2>今日の食事記録</h2>
+<h2>{{ today }} の食事記録</h2>
 {% if logs %}
 <ul>
     {% for log in logs %}
