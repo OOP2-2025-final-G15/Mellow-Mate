@@ -1,6 +1,14 @@
 {% extends "layout.html" %}
 
 {% block content %}
+<style>
+  /* このページだけ、親テンプレート(layout.html)のmainタグの余白設定を無効にする */
+  main {
+    max-width: 100% !important; /* 幅制限を解除 */
+    margin: 0 !important;       /* 外側の余白をゼロに */
+    padding: 0 !important;      /* 内側の余白をゼロに */
+  }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div style="display: flex; min-height: 100vh;">
@@ -15,8 +23,7 @@
   </nav>
 
   <div style="flex: 1; padding: 40px;">
-    <h2>ダッシュボード</h2>
-    <h3>{{ user.userName }} さんの記録</h3>
+    <h2>{{ user.userName }} さんの記録</h2>
 
     <div>
       <p>身長：{{ user.height }} cm</p>
@@ -40,6 +47,15 @@
         <div style="height: 280px;">
             <canvas id="dailyCalorieChart"></canvas>
         </div>
+    </div>
+
+    <hr>
+
+    <div style="width: 100%; max-width: 1000px; height: 380px; margin: 20px 0; background: white; padding: 20px; border-radius: 10px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <h4 style="margin-top: 0; font-size: 1rem; color: #333;">体重推移 (kg)</h4>
+    <div style="height: 280px;">
+        <canvas id="weightTrendChart"></canvas>
+    </div>
     </div>
 
     <hr>
@@ -130,6 +146,87 @@
     });
 
     renderChart(selYear, selMonth);
+
+    // --- 体重推移グラフの描画 ---
+    function renderWeightChart(selectedYear, selectedMonth) {
+        const weightCanvas = document.getElementById('weightTrendChart');
+        if (!weightCanvas) return;
+
+        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        const labels = Array.from({length: daysInMonth}, (_, i) => `${i + 1}`);
+        
+        // Pythonから届く体重リストを取得
+        const weightData = JSON.parse('{{ weight_list | default([]) | tojson | safe }}');
+
+        // ★全記録の中から最小値と最大値を計算する
+        // null（未入力）を除外して数値だけを取り出す
+        const validWeights = weightData.filter(v => v !== null && v !== undefined);
+        
+        let yMin, yMax;
+        
+        if (validWeights.length > 0) {
+            // 記録がある場合：(最小値 - 5) から (最大値 + 5)
+            yMin = Math.min(...validWeights) - 5;
+            yMax = Math.max(...validWeights) + 5;
+        } else {
+            // 記録が1つもない場合：今日の体重を基準にする
+            const base = Number('{{ current_weight | default(50) }}');
+            yMin = base - 5;
+            yMax = base + 5;
+        }
+
+        new Chart(weightCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '体重',
+                    data: weightData,
+                    borderColor: '#9b59b6',
+                    backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#9b59b6',
+                    spanGaps: true // データがない日を飛ばして線を繋ぐ
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { autoSkip: false, font: { size: 10 } }
+                    },
+                    y: {
+                        // ★計算した最小・最大値を適用
+                        min: Math.floor(yMin),
+                        max: Math.ceil(yMax),
+                        title: { display: true, text: 'kg' },
+                        ticks: {
+                            stepSize: 1, 
+                            callback: function(value) {
+                                // 5kg刻みで数字を表示
+                                return value % 5 === 0 ? value : '';
+                            },
+                            font: { size: 11 }
+                        },
+                        grid: {
+                            color: (context) => {
+                                return context.tick.value % 5 === 0 ? 'rgba(0, 0, 0, 0.1)' : 'transparent';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // カロリーグラフと一緒に体重グラフも実行
+    renderWeightChart(selYear, selMonth);
+
   });
 </script>
 
