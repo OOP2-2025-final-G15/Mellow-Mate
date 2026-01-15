@@ -1,29 +1,21 @@
 {% extends "layout.html" %}
+
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div style="display: flex; min-height: 100vh;">
   <nav style="width: 200px; background-color: #f8f9fa; border-right: 1px solid #dee2e6; padding: 20px;">
     <ul style="list-style: none; padding: 0;">
-      <li style="margin-bottom: 20px;">
-        <a href="{{ url_for('update_settings') }}" style="text-decoration: none; color: #333;">👤 ユーザー</a>
-      </li>
-      <li style="margin-bottom: 20px;">
-        <a href="{{ url_for('weight') }}" style="text-decoration: none; color: #333;">⚖️ 体重</a>
-      </li>
-      <li style="margin-bottom: 20px;">
-        <a href="{{ url_for('calories') }}" style="text-decoration: none; color: #333;">🍴 カロリー</a>
-      </li>
-      <li style="margin-bottom: 20px;">
-        <a href="{{ url_for('stepCount') }}" style="text-decoration: none; color: #333;">👟 歩数</a>
-      </li>
-      <li style="margin-bottom: 20px;">
-        <a href="{{ url_for('waterIntake') }}" style="text-decoration: none; color: #333;">💧 水分量</a>
-      </li>
+      <li style="margin-bottom: 20px;"><a href="{{ url_for('update_settings') }}" style="text-decoration: none; color: #333;">👤 ユーザー</a></li>
+      <li style="margin-bottom: 20px;"><a href="{{ url_for('weight') }}" style="text-decoration: none; color: #333;">⚖️ 体重</a></li>
+      <li style="margin-bottom: 20px;"><a href="{{ url_for('calories') }}" style="text-decoration: none; color: #333;">🍴 カロリー</a></li>
+      <li style="margin-bottom: 20px;"><a href="{{ url_for('stepCount') }}" style="text-decoration: none; color: #333;">👟 歩数</a></li>
+      <li style="margin-bottom: 20px;"><a href="{{ url_for('waterIntake') }}" style="text-decoration: none; color: #333;">💧 水分量</a></li>
     </ul>
   </nav>
 
   <div style="flex: 1; padding: 40px;">
     <h2>ダッシュボード</h2>
-
     <h3>{{ user.userName }} さんの記録</h3>
 
     <div>
@@ -40,18 +32,109 @@
 
     <hr>
 
+    <div style="width: 100%; max-width: 1000px; height: 380px; margin: 20px 0; background: white; padding: 20px; border-radius: 10px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="margin-bottom: 10px; text-align: right;">
+            <label for="monthSelect" style="font-size: 0.9rem; font-weight: bold; margin-right: 5px;">表示月:</label>
+            <select id="monthSelect" style="padding: 3px 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 0.9rem;"></select>
+        </div>
+        <div style="height: 280px;">
+            <canvas id="dailyCalorieChart"></canvas>
+        </div>
+    </div>
+
+    <hr>
+
     <div>
       <p>摂取カロリー：{{ total_calories }} kcal</p>
-      
       <p>消費カロリー：{{ burned_calories }} kcal</p> 
-      
       <p>歩数：{{ steps|default(0) }} 歩</p>
-      
       <p>水分量：{{ water|default(0) }} ml</p>
     </div>
 
-    <a href="{{ url_for('goals') }}" style="color: #2ecc71; text-decoration: none;">目標を変更する</a>
+    <a href="{{ url_for('goals') }}" style="color: #2ecc71; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 10px;">目標を変更する</a>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const canvasElement = document.getElementById('dailyCalorieChart');
+    const monthSelect = document.getElementById('monthSelect');
+    if (!canvasElement || !monthSelect) return;
+
+    const ctx = canvasElement.getContext('2d');
+    let chart;
+
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const option = document.createElement('option');
+        option.value = `${d.getFullYear()}-${d.getMonth()}`;
+        option.textContent = `${d.getFullYear()}年 ${d.getMonth() + 1}月`;
+        monthSelect.appendChild(option);
+    }
+
+    function updateChart(selectedYear, selectedMonth) {
+        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        const labels = Array.from({length: daysInMonth}, (_, i) => `${i + 1}`);
+
+        const intakeData = new Array(daysInMonth).fill(0);
+        const burnedData = new Array(daysInMonth).fill(0);
+
+        const currentRealDate = new Date();
+        if (selectedYear === currentRealDate.getFullYear() && selectedMonth === currentRealDate.getMonth()) {
+            const today = currentRealDate.getDate();
+            intakeData[today - 1] = Number("{{ total_calories | default(0) }}");
+            burnedData[today - 1] = Number("{{ burned_calories | default(0) }}");
+        }
+
+        const targetValue = Number("{{ user.targetCalories | default(0) }}");
+        const targetData = new Array(daysInMonth).fill(targetValue);
+
+        if (chart) chart.destroy();
+
+        chart = new Chart(ctx, {
+            data: {
+                labels: labels,
+                datasets: [
+                    { type: 'line', label: '目標', data: targetData, borderColor: '#5dade2', borderWidth: 2, fill: false, pointRadius: 0, order: 1 },
+                    { type: 'bar', label: '摂取', data: intakeData, backgroundColor: '#f9d976', order: 2 },
+                    { type: 'bar', label: '消費', data: burnedData, backgroundColor: '#f1948a', order: 2 }
+                    
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            // ★修正ポイント: 全ての日付を表示させる設定
+                            autoSkip: false, 
+                            font: { size: 10 },
+                            maxRotation: 0,
+                            minRotation: 0
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'kcal' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { boxWidth: 12 } }
+                }
+            }
+        });
+    }
+
+    monthSelect.addEventListener('change', (e) => {
+        const [year, month] = e.target.value.split('-').map(Number);
+        updateChart(year, month);
+    });
+
+    updateChart(now.getFullYear(), now.getMonth());
+  });
+</script>
 
 {% endblock %}
