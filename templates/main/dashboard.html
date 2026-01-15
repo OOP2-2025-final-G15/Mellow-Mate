@@ -65,29 +65,31 @@
     let chart;
 
     const now = new Date();
+    // URLから現在の選択年月を取得（なければ当月）
+    const urlParams = new URLSearchParams(window.location.search);
+    const selYear = parseInt(urlParams.get('year')) || now.getFullYear();
+    const selMonth = urlParams.get('month') !== null ? parseInt(urlParams.get('month')) : now.getMonth();
+
+    // 1. 月選択プルダウンの作成
     for (let i = 0; i < 12; i++) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const option = document.createElement('option');
-        option.value = `${d.getFullYear()}-${d.getMonth()}`;
-        option.textContent = `${d.getFullYear()}年 ${d.getMonth() + 1}月`;
+        const valYear = d.getFullYear();
+        const valMonth = d.getMonth();
+        option.value = `${valYear}-${valMonth}`;
+        option.textContent = `${valYear}年 ${valMonth + 1}月`;
+        if (valYear === selYear && valMonth === selMonth) option.selected = true;
         monthSelect.appendChild(option);
     }
 
-    function updateChart(selectedYear, selectedMonth) {
+    function renderChart(selectedYear, selectedMonth) {
         const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
         const labels = Array.from({length: daysInMonth}, (_, i) => `${i + 1}`);
 
-        const intakeData = new Array(daysInMonth).fill(0);
-        const burnedData = new Array(daysInMonth).fill(0);
-
-        const currentRealDate = new Date();
-        if (selectedYear === currentRealDate.getFullYear() && selectedMonth === currentRealDate.getMonth()) {
-            const today = currentRealDate.getDate();
-            intakeData[today - 1] = Number("{{ total_calories | default(0) }}");
-            burnedData[today - 1] = Number("{{ burned_calories | default(0) }}");
-        }
-
-        const targetValue = Number("{{ user.targetCalories | default(0) }}");
+        // ★修正ポイント: 文字列として受け取ってパースすることで VS Code のエラーを回避
+        const intakeData = JSON.parse('{{ intake_list | default([]) | tojson | safe }}');
+        const burnedData = JSON.parse('{{ burned_list | default([]) | tojson | safe }}');
+        const targetValue = Number('{{ user.targetCalories | default(0) }}');
         const targetData = new Array(daysInMonth).fill(targetValue);
 
         if (chart) chart.destroy();
@@ -99,7 +101,6 @@
                     { type: 'line', label: '目標', data: targetData, borderColor: '#5dade2', borderWidth: 2, fill: false, pointRadius: 0, order: 1 },
                     { type: 'bar', label: '摂取', data: intakeData, backgroundColor: '#f9d976', order: 2 },
                     { type: 'bar', label: '消費', data: burnedData, backgroundColor: '#f1948a', order: 2 }
-                    
                 ]
             },
             options: {
@@ -108,13 +109,7 @@
                 scales: {
                     x: {
                         grid: { display: false },
-                        ticks: {
-                            // ★修正ポイント: 全ての日付を表示させる設定
-                            autoSkip: false, 
-                            font: { size: 10 },
-                            maxRotation: 0,
-                            minRotation: 0
-                        }
+                        ticks: { autoSkip: false, font: { size: 10 } }
                     },
                     y: {
                         beginAtZero: true,
@@ -128,12 +123,13 @@
         });
     }
 
+    // 月を変更した時にページをリロードしてデータを取得し直す
     monthSelect.addEventListener('change', (e) => {
-        const [year, month] = e.target.value.split('-').map(Number);
-        updateChart(year, month);
+        const [year, month] = e.target.value.split('-');
+        window.location.href = `{{ url_for('dashboard') }}?year=${year}&month=${month}`;
     });
 
-    updateChart(now.getFullYear(), now.getMonth());
+    renderChart(selYear, selMonth);
   });
 </script>
 
