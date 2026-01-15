@@ -169,9 +169,20 @@
         // Pythonから届く体重リストを取得
         const weightData = JSON.parse('{{ weight_list | default([]) | tojson | safe }}');
 
+        //目標体重を取得し、月の日数分の配列を作る
+        const targetWeightValue = Number('{{ user.targetWeight | default(0) }}');
+        // 目標体重が設定されていない(0)場合は表示しないようにnullを入れる、設定されていれば配列を埋める
+        const targetData = targetWeightValue > 0 ? new Array(daysInMonth).fill(targetWeightValue) : [];
+
         // ★全記録の中から最小値と最大値を計算する
         // null（未入力）を除外して数値だけを取り出す
         const validWeights = weightData.filter(v => v !== null && v !== undefined);
+
+        //範囲計算用のリストに目標体重も含める（目標線がグラフからはみ出ないように）
+        let rangeValues = [...validWeights];
+        if (targetWeightValue > 0) {
+            rangeValues.push(targetWeightValue);
+        }
         
         let yMin, yMax;
         
@@ -190,7 +201,18 @@
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
+                datasets: [
+                    {
+                    label: '目標',
+                    data: targetData,
+                    borderColor: '#e74c3c', // 赤っぽい色
+                    borderWidth: 2,
+                    borderDash: [5, 5],     // 点線にする
+                    pointRadius: 0,         // 点は表示しない
+                    fill: false,
+                    order: 1                // 手前に表示かどうか（数値が小さいほど手前ではない場合があるが、line同士なので順序はあまり影響しません）
+                    },
+                    {
                     label: '体重',
                     data: weightData,
                     borderColor: '#9b59b6',
