@@ -175,6 +175,13 @@ th {
     margin-bottom: 10px;
 }
 
+.welcome-container ul {
+    display: inline-block;      /* 全体を中央にまとめる */
+    text-align: left;         /* 箇条書きは左揃え */
+    list-style-position: inside;
+    padding-left: 0;            /* ・の位置を自然に */
+}
+
 .actions {
     margin-top: 30px;
 }
