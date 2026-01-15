@@ -232,6 +232,15 @@ def input_food():
 @app.route("/tracking/calories", methods=["GET", "POST"])
 @login_required
 def calories():
+    date_str = request.args.get("date")
+    if date_str:
+        try:
+            # 文字列を日付データに変換
+            today = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            today = datetime.date.today()
+    else:
+        today = datetime.date.today()
     if request.method == "POST":
         food_id_val = request.form.get("food_id")
         if not food_id_val:
@@ -247,10 +256,11 @@ def calories():
             meal_time=meal_time,
             record_date=record_date
         )
-        return redirect(url_for("calories"))
-
+        # 登録した日付のページを表示するようにリダイレクト先を変更
+        return redirect(url_for("calories",date=record_date))
+    # GET時の表示用データ作成
     foods = Food.select()
-    today = datetime.date.today()
+    # today = datetime.date.today()
     logs = (FoodLog.select(FoodLog, Food).join(Food)
             .where((FoodLog.user == current_user) & (FoodLog.record_date == today)))
     
