@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div style="display: flex; min-height: 100vh;">
-  <nav style="width: 200px; background-color: #f8f9fa; border-right: 1px solid #dee2e6; padding: 20px;">
+  <nav style="width: 200px; background-color: #f8f9fa; border-right: 1px solid #dee2e6; padding: 20px; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
     <ul style="list-style: none; padding: 0;">
       <li style="margin-bottom: 20px;"><a href="{{ url_for('update_settings') }}" style="text-decoration: none; color: #333;">👤 ユーザー</a></li>
       <li style="margin-bottom: 20px;"><a href="{{ url_for('weight') }}" style="text-decoration: none; color: #333;">⚖️ 体重</a></li>
@@ -22,8 +22,8 @@
     </ul>
   </nav>
 
-  <div style="flex: 1; padding: 40px;">
-    <h2>{{ user.userName }} さんの記録</h2>
+     <div style="flex: 1; padding: 40px;">
+    <h2 style="margin: 0;">{{ user.userName }} さんの記録</h2>
 
     <div>
       <p>身長：{{ user.height }} cm</p>
@@ -59,6 +59,17 @@
     </div>
 
     <hr>
+
+    <div style="width: 100%; max-width: 1000px; height: 380px; margin: 20px 0; background: white; padding: 20px; border-radius: 10px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+      <h4 style="margin-top: 0; font-size: 1rem; color: #333;">摂取水分量 (目標: 2000ml)</h4>
+      <div style="height: 280px; display: flex; justify-content: center;">
+          <canvas id="waterIntakeChart"></canvas>
+      </div>
+    </div>
+
+    <hr>
+    <div>
+      <p>摂取カロリー：{{ total_calories }} kcal</p>
 
     <div>
       <p>摂取カロリー：{{ total_calories }} kcal</p>
@@ -158,9 +169,20 @@
         // Pythonから届く体重リストを取得
         const weightData = JSON.parse('{{ weight_list | default([]) | tojson | safe }}');
 
+        //目標体重を取得し、月の日数分の配列を作る
+        const targetWeightValue = Number('{{ user.targetWeight | default(0) }}');
+        // 目標体重が設定されていない(0)場合は表示しないようにnullを入れる、設定されていれば配列を埋める
+        const targetData = targetWeightValue > 0 ? new Array(daysInMonth).fill(targetWeightValue) : [];
+
         // ★全記録の中から最小値と最大値を計算する
         // null（未入力）を除外して数値だけを取り出す
         const validWeights = weightData.filter(v => v !== null && v !== undefined);
+
+        //範囲計算用のリストに目標体重も含める（目標線がグラフからはみ出ないように）
+        let rangeValues = [...validWeights];
+        if (targetWeightValue > 0) {
+            rangeValues.push(targetWeightValue);
+        }
         
         let yMin, yMax;
         
@@ -179,7 +201,18 @@
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
+                datasets: [
+                    {
+                    label: '目標',
+                    data: targetData,
+                    borderColor: '#e74c3c', // 赤っぽい色
+                    borderWidth: 2,
+                    borderDash: [5, 5],     // 点線にする
+                    pointRadius: 0,         // 点は表示しない
+                    fill: false,
+                    order: 1                // 手前に表示かどうか（数値が小さいほど手前ではない場合があるが、line同士なので順序はあまり影響しません）
+                    },
+                    {
                     label: '体重',
                     data: weightData,
                     borderColor: '#9b59b6',
@@ -228,6 +261,72 @@
     renderWeightChart(selYear, selMonth);
 
   });
+
+  // --- ▼▼▼ 水分円グラフの描画 ▼▼▼ ---
+    function renderWaterChart() {
+        const waterCanvas = document.getElementById('waterIntakeChart');
+        if (!waterCanvas) return;
+
+        // 現在の水分量を取得 (Jinja2から埋め込み)
+        const currentWater = Number('{{ water | default(0) }}');
+        
+        // ★目標水分量 (仮で2000mlに設定。DBにある場合は {{ user.targetWater }} などに変更)
+        const targetWater = 2000; 
+
+        // 残りの量を計算 (マイナスにならないように0で止める)
+        const remainingWater = Math.max(0, targetWater - currentWater);
+
+        // 達成率を計算
+        const achievementRate = Math.round((currentWater / targetWater) * 100);
+
+        new Chart(waterCanvas.getContext('2d'), {
+            type: 'doughnut', // 'pie' にすると普通の円グラフになります
+            data: {
+                labels: ['摂取済み', '残り'],
+                datasets: [{
+                    data: [currentWater, remainingWater],
+                    backgroundColor: [
+                        '#3498db', // 摂取済みの色 (青)
+                        '#ecf0f1'  // 残りの色 (グレー)
+                    ],
+                    borderWidth: 0, // 境界線をなしにする
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `達成率: ${achievementRate}% (${currentWater} / ${targetWater} ml)`,
+                        font: { size: 16 },
+                        padding: { bottom: 20 }
+                    },
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.raw + ' ml';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 水分グラフを実行
+    renderWaterChart();
 </script>
+
+
 
 {% endblock %}
