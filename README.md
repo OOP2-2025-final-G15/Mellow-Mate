@@ -12,8 +12,24 @@ Mellow Mate は、食事・体重・歩数・水分摂取をシンプルに記�
 - 柔軟なカロリー管理：朝・昼・夜の食事の記録で1日のカロリーを簡単に管理。
 - 安心のセキュリティ：アカウント登録をすることで、プライバシーを守りながら利用。
 
-## GUI画面のデモ動画
-ここにURLを書く
+## アプリ画面
+### スタート画面 / プロフィール入力画面
+<p align="center">
+  <img src="start.png" width="45%">
+  <img src="profile.png" width="45%">
+</p>
+
+### ログイン画面 / ホーム画面①
+<p align="center">
+  <img src="login.png" width="45%">
+  <img src="main.png" width="45%">
+</p>
+
+### ホーム画面② / ホーム画面③
+<p align="center">
+  <img src="main2.png" width="45%">
+  <img src="main3.png" width="45%">
+</p>
 
 ## 使い方
 ### 1. 実行環境の準備
